@@ -33,9 +33,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -52,8 +55,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.joda.time.DateTime;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 
 
 public final class OcrCaptureActivity extends AppCompatActivity {
@@ -259,12 +265,39 @@ public final class OcrCaptureActivity extends AppCompatActivity {
             if (text != null && text.getValue() != null && text.getValue().matches("[-+]?\\d+")) {
 
                 final String finalText = text.getValue();
+
+                DateTime dateTime = new DateTime();
+                int dayOfTheWeek = dateTime.getDayOfWeek();
+                final int hours = dateTime.getHourOfDay();
+                final int minutes = dateTime.getMinuteOfHour();
+
+                String subject = null;
+                String teacher = null;
+                String students = null;
+
                 myRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
 
-                        String value = dataSnapshot.child(finalText).getValue(String.class);
-                        Log.d("TAGA", "subject is: " + value);
+                        for (DataSnapshot ds : dataSnapshot.child(finalText).getChildren()) {
+
+                            String []time = ds.getKey().split("-");
+
+                            String [] lesson_start = time[0].split(":");
+
+                            String [] lesson_end = time[1].split(":");
+
+
+                            if(hours >= Integer.parseInt(lesson_start[0]) && hours<= Integer.parseInt(lesson_end[0]) && minutes >= Integer.parseInt(lesson_start[1]) && minutes <= Integer.parseInt(lesson_end[1])) {
+
+                            String subject = ds.child("subject").getValue().toString();
+                            String teacher = ds.child("teacher").getValue().toString();
+                            String students = ds.child("students").getValue().toString();
+
+                            }
+
+                        }
+
                     }
 
                     @Override
@@ -273,6 +306,30 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                         Log.w(TAG, "Failed to read value.", error.toException());
                     }
                 });
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                LayoutInflater layoutInflater = getLayoutInflater();
+                final View dialogView = layoutInflater.inflate(R.layout.lesson_dialog, null);
+                builder.setView(dialogView);
+
+                AlertDialog b = builder.create();
+
+                TextView classroom = dialogView.findViewById(R.id.classroom);
+                TextView studentstv = dialogView.findViewById(R.id.students);
+                TextView subjecttv = dialogView.findViewById(R.id.subject);
+                TextView teachertv = dialogView.findViewById(R.id.teacher);
+
+                if(!(students == null && subject == null && teacher == null)) {
+
+                    classroom.setText("Кабинет № " + finalText);
+                    studentstv.setText("Класс: " + students);
+                    subjecttv.setText("Предмет: " + subject);
+                    teachertv.setText("Учитель: " + teacher);
+
+                }
+
+                b.show();
+
 
 
             }
