@@ -56,10 +56,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.TimeZone;
 
 
 public final class OcrCaptureActivity extends AppCompatActivity {
@@ -267,13 +269,13 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 final String finalText = text.getValue();
 
                 DateTime dateTime = new DateTime();
-                int dayOfTheWeek = dateTime.getDayOfWeek();
-                final int hours = dateTime.getHourOfDay();
+                int dayOfTheWeek = dateTime.plusHours(3).getDayOfWeek();
+                final int hours = dateTime.plusHours(3).getHourOfDay();
                 final int minutes = dateTime.getMinuteOfHour();
 
-                String subject = null;
-                String teacher = null;
-                String students = null;
+                final String[] subject = {null};
+                final String[] teacher = {null};
+                final String[] students = {null};
 
                 myRef.addValueEventListener(new ValueEventListener() {
                     @Override
@@ -290,9 +292,9 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
                             if(hours >= Integer.parseInt(lesson_start[0]) && hours<= Integer.parseInt(lesson_end[0]) && minutes >= Integer.parseInt(lesson_start[1]) && minutes <= Integer.parseInt(lesson_end[1])) {
 
-                            String subject = ds.child("subject").getValue().toString();
-                            String teacher = ds.child("teacher").getValue().toString();
-                            String students = ds.child("students").getValue().toString();
+                                subject[0] = ds.child("subject").getValue().toString();
+                                teacher[0] = ds.child("teacher").getValue().toString();
+                                students[0] = ds.child("students").getValue().toString();
 
                             }
 
@@ -319,12 +321,12 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 TextView subjecttv = dialogView.findViewById(R.id.subject);
                 TextView teachertv = dialogView.findViewById(R.id.teacher);
 
-                if(!(students == null && subject == null && teacher == null)) {
+                if(!(students[0] == null && subject[0] == null && teacher[0] == null)) {
 
                     classroom.setText("Кабинет № " + finalText);
-                    studentstv.setText("Класс: " + students);
-                    subjecttv.setText("Предмет: " + subject);
-                    teachertv.setText("Учитель: " + teacher);
+                    studentstv.setText("Класс: " + students[0]);
+                    subjecttv.setText("Предмет: " + subject[0]);
+                    teachertv.setText("Учитель: " + teacher[0]);
 
                 }
 
