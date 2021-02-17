@@ -87,7 +87,6 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("classes");
-    Lesson lesson = new Lesson();
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -261,6 +260,10 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     }
 
     String finalText = "";
+    DateTime dateTime = new DateTime();
+    int dayOfTheWeek = dateTime.plusHours(3).getDayOfWeek();
+    int hours = dateTime.plusHours(3).getHourOfDay();
+    int minutes = dateTime.getMinuteOfHour();
 
     private boolean onTap(float rawX, float rawY) {
         OcrGraphic graphic = graphicOverlay.getGraphicAtLocation(rawX, rawY);
@@ -271,13 +274,10 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
                 finalText = text.getValue();
 
-                DateTime dateTime = new DateTime();
-                int dayOfTheWeek = dateTime.plusHours(3).getDayOfWeek();
-                final int hours = dateTime.plusHours(3).getHourOfDay();
-                final int minutes = dateTime.getMinuteOfHour();
-
 
                 myRef.addValueEventListener(new ValueEventListener() {
+
+                    Lesson lesson = new Lesson();
 
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -290,12 +290,36 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
                             String [] lesson_end = time[1].split(":");
 
+                            Log.d("TAGA", lesson_start[0]);
 
                             if(hours >= Integer.parseInt(lesson_start[0]) && hours<= Integer.parseInt(lesson_end[0]) && minutes >= Integer.parseInt(lesson_start[1]) && minutes <= Integer.parseInt(lesson_end[1])) {
 
-                                lesson = ds.getValue(Lesson.class);
+                               lesson = ds.getValue(Lesson.class);
 
                             }
+
+                            AlertDialog.Builder builder = new AlertDialog.Builder(OcrCaptureActivity.this);
+                            LayoutInflater layoutInflater = getLayoutInflater();
+                            View dialogView = layoutInflater.inflate(R.layout.lesson_dialog, null);
+                            builder.setView(dialogView);
+
+                            TextView classroom = dialogView.findViewById(R.id.classroom);
+                            TextView studentstv = dialogView.findViewById(R.id.students);
+                            TextView subjecttv = dialogView.findViewById(R.id.subject);
+                            TextView teachertv = dialogView.findViewById(R.id.teacher);
+
+                            if(lesson.subject != null && lesson.teacher != null && lesson.students != null) {
+
+                                classroom.setText("Кабинет № " + finalText);
+                                studentstv.setText("Класс: " + lesson.students);
+                                subjecttv.setText("Предмет: " + lesson.subject);
+                                teachertv.setText("Учитель: " + lesson.teacher);
+
+                            }
+
+                            AlertDialog b = builder.create();
+
+                            b.show();
 
                         }
 
@@ -307,29 +331,6 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                         Log.w(TAG, "Failed to read value.", error.toException());
                     }
                 });
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                LayoutInflater layoutInflater = getLayoutInflater();
-                final View dialogView = layoutInflater.inflate(R.layout.lesson_dialog, null);
-                builder.setView(dialogView);
-
-                AlertDialog b = builder.create();
-
-                TextView classroom = dialogView.findViewById(R.id.classroom);
-                TextView studentstv = dialogView.findViewById(R.id.students);
-                TextView subjecttv = dialogView.findViewById(R.id.subject);
-                TextView teachertv = dialogView.findViewById(R.id.teacher);
-
-                if(lesson.subject != null && lesson.teacher != null && lesson.students != null) {
-
-                    classroom.setText("Кабинет № " + finalText);
-                    studentstv.setText("Класс: " + lesson.students);
-                    subjecttv.setText("Предмет: " + lesson.subject);
-                    teachertv.setText("Учитель: " + lesson.teacher);
-
-                }
-
-                b.show();
 
 
 
