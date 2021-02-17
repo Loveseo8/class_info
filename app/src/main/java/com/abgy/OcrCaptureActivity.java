@@ -31,6 +31,12 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
+
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -88,10 +94,14 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("classes");
 
+    LessonViewModel lessonViewModel = new LessonViewModel();
+
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(R.layout.ocr_capture);
+
+        lessonViewModel = new ViewModelProvider(this).get(LessonViewModel.class);
 
         preview = (CameraSourcePreview) findViewById(R.id.preview);
         graphicOverlay = (GraphicOverlay<OcrGraphic>) findViewById(R.id.graphicOverlay);
@@ -259,6 +269,8 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         }
     }
 
+    Lesson lesson = new Lesson();
+
     String finalText = "";
     DateTime dateTime = new DateTime();
     int dayOfTheWeek = dateTime.plusHours(3).getDayOfWeek();
@@ -277,8 +289,6 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
                 myRef.addValueEventListener(new ValueEventListener() {
 
-                    Lesson lesson = new Lesson();
-
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -292,34 +302,21 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
                             Log.d("TAGA", lesson_start[0]);
 
-                            if(hours >= Integer.parseInt(lesson_start[0]) && hours<= Integer.parseInt(lesson_end[0]) && minutes >= Integer.parseInt(lesson_start[1]) && minutes <= Integer.parseInt(lesson_end[1])) {
+                            lesson.subject = ds.child("subject").getValue(String.class);
+                            lesson.teacher = ds.child("teacher").getValue(String.class);
+                            lesson.students = ds.child("students").getValue(String.class);
 
-                               lesson = ds.getValue(Lesson.class);
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
 
-                            }
+                                    lessonViewModel.setSubject(lesson.subject);
+                                    lessonViewModel.setStudents(lesson.students);
+                                    lessonViewModel.setTeacher(lesson.teacher);
 
-                            AlertDialog.Builder builder = new AlertDialog.Builder(OcrCaptureActivity.this);
-                            LayoutInflater layoutInflater = getLayoutInflater();
-                            View dialogView = layoutInflater.inflate(R.layout.lesson_dialog, null);
-                            builder.setView(dialogView);
-
-                            TextView classroom = dialogView.findViewById(R.id.classroom);
-                            TextView studentstv = dialogView.findViewById(R.id.students);
-                            TextView subjecttv = dialogView.findViewById(R.id.subject);
-                            TextView teachertv = dialogView.findViewById(R.id.teacher);
-
-                            if(lesson.subject != null && lesson.teacher != null && lesson.students != null) {
-
-                                classroom.setText("Кабинет № " + finalText);
-                                studentstv.setText("Класс: " + lesson.students);
-                                subjecttv.setText("Предмет: " + lesson.subject);
-                                teachertv.setText("Учитель: " + lesson.teacher);
-
-                            }
-
-                            AlertDialog b = builder.create();
-
-                            b.show();
+                                }
+                            });
 
                         }
 
@@ -332,7 +329,42 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                     }
                 });
 
+                AlertDialog.Builder builder = new AlertDialog.Builder(OcrCaptureActivity.this);
+                LayoutInflater layoutInflater = getLayoutInflater();
+                View dialogView = layoutInflater.inflate(R.layout.lesson_dialog, null);
+                builder.setView(dialogView);
 
+                TextView classroom = dialogView.findViewById(R.id.classroom);
+                final TextView studentstv = dialogView.findViewById(R.id.students);
+                final TextView subjecttv = dialogView.findViewById(R.id.subject);
+                final TextView teachertv = dialogView.findViewById(R.id.teacher);
+
+                classroom.setText("Кабинет № " + finalText);
+
+                AlertDialog b = builder.create();
+
+                lessonViewModel.getSubject().observe(this, new Observer<String>() {
+                    @Override
+                    public void onChanged(String s) {
+                        subjecttv.setText("Предмет: " + s);
+                    }
+                });
+
+                lessonViewModel.getStudents().observe(this, new Observer<String>() {
+                    @Override
+                    public void onChanged(String s) {
+                        studentstv.setText("Класс: " + s);
+                    }
+                });
+
+                lessonViewModel.getTeacher().observe(this, new Observer<String>() {
+                    @Override
+                    public void onChanged(String s) {
+                        teachertv.setText("Учитель: " + lesson.teacher);
+                    }
+                });
+
+                b.show();
 
             }
             else {
