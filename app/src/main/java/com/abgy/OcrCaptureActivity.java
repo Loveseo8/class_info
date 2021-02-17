@@ -87,6 +87,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("classes");
+    Lesson lesson = new Lesson();
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -273,10 +274,6 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 final int hours = dateTime.plusHours(3).getHourOfDay();
                 final int minutes = dateTime.getMinuteOfHour();
 
-                final String[] subject = {null};
-                final String[] teacher = {null};
-                final String[] students = {null};
-
                 myRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -292,9 +289,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
                             if(hours >= Integer.parseInt(lesson_start[0]) && hours<= Integer.parseInt(lesson_end[0]) && minutes >= Integer.parseInt(lesson_start[1]) && minutes <= Integer.parseInt(lesson_end[1])) {
 
-                                subject[0] = ds.child("subject").getValue().toString();
-                                teacher[0] = ds.child("teacher").getValue().toString();
-                                students[0] = ds.child("students").getValue().toString();
+                                lesson = ds.getValue(Lesson.class);
 
                             }
 
@@ -321,12 +316,12 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 TextView subjecttv = dialogView.findViewById(R.id.subject);
                 TextView teachertv = dialogView.findViewById(R.id.teacher);
 
-                if(!(students[0] == null && subject[0] == null && teacher[0] == null)) {
+                if(lesson.subject != null && lesson.teacher != null && lesson.students != null) {
 
                     classroom.setText("Кабинет № " + finalText);
-                    studentstv.setText("Класс: " + students[0]);
-                    subjecttv.setText("Предмет: " + subject[0]);
-                    teachertv.setText("Учитель: " + teacher[0]);
+                    studentstv.setText("Класс: " + lesson.students);
+                    subjecttv.setText("Предмет: " + lesson.subject);
+                    teachertv.setText("Учитель: " + lesson.teacher);
 
                 }
 
@@ -401,5 +396,22 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
         }
 
+    }
+}
+
+class Lesson{
+
+    public String teacher;
+    public String students;
+    public String subject;
+
+    public Lesson(){
+
+    }
+
+    public Lesson(String teacher, String students, String subject) {
+        this.teacher = teacher;
+        this.students = students;
+        this.subject = subject;
     }
 }
