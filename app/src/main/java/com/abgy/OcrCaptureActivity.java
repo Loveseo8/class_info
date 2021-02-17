@@ -260,6 +260,8 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         }
     }
 
+    String finalText = "";
+
     private boolean onTap(float rawX, float rawY) {
         OcrGraphic graphic = graphicOverlay.getGraphicAtLocation(rawX, rawY);
         TextBlock text = null;
@@ -267,14 +269,16 @@ public final class OcrCaptureActivity extends AppCompatActivity {
             text = graphic.getTextBlock();
             if (text != null && text.getValue() != null && text.getValue().matches("[-+]?\\d+")) {
 
-                final String finalText = text.getValue();
+                finalText = text.getValue();
 
                 DateTime dateTime = new DateTime();
                 int dayOfTheWeek = dateTime.plusHours(3).getDayOfWeek();
                 final int hours = dateTime.plusHours(3).getHourOfDay();
                 final int minutes = dateTime.getMinuteOfHour();
 
+
                 myRef.addValueEventListener(new ValueEventListener() {
+
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
 
