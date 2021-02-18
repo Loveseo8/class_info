@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ocr-reader-complete.iml" filepath="$PROJECT_DIR$/.idea/modules/ocr-reader-complete.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/ocr-reader-complete.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/ocr-reader-complete.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/class_info.iml" filepath="$PROJECT_DIR$/.idea/modules/class_info.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/class_info.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/class_info.app.iml" />
     </modules>
   </component>
 </project>

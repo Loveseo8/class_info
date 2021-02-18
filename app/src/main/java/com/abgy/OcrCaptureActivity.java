@@ -65,16 +65,21 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
+
+import static java.time.LocalTime.of;
 
 
 public final class OcrCaptureActivity extends AppCompatActivity {
 
     DatabaseReference databaseClasses = FirebaseDatabase.getInstance().getReference("classes");
     private static final String TAG = "OcrCaptureActivity";
-    ArrayList<String> classesInfo = new ArrayList<>();
 
     private static final int RC_HANDLE_GMS = 9001;
 
@@ -277,6 +282,9 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     int hours = dateTime.plusHours(3).getHourOfDay();
     int minutes = dateTime.getMinuteOfHour();
 
+    LocalTime now = LocalTime.of(hours, minutes);
+
+
     private boolean onTap(float rawX, float rawY) {
         OcrGraphic graphic = graphicOverlay.getGraphicAtLocation(rawX, rawY);
         TextBlock text = null;
@@ -294,29 +302,43 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
                         for (DataSnapshot ds : dataSnapshot.child(finalText).getChildren()) {
 
-                            String []time = ds.getKey().split("-");
+                            if(Integer.parseInt(ds.getKey()) == dayOfTheWeek) {
 
-                            String [] lesson_start = time[0].split(":");
+                                for(DataSnapshot dss : ds.getChildren()) {
 
-                            String [] lesson_end = time[1].split(":");
+                                    String[] time = dss.getKey().split("-");
 
-                            Log.d("TAGA", lesson_start[0]);
+                                    String[] lesson_start = time[0].split(":");
 
-                            lesson.subject = ds.child("subject").getValue(String.class);
-                            lesson.teacher = ds.child("teacher").getValue(String.class);
-                            lesson.students = ds.child("students").getValue(String.class);
+                                    String[] lesson_end = time[1].split(":");
 
-                            Handler handler = new Handler(Looper.getMainLooper());
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
+                                    LocalTime start = LocalTime.of(Integer.parseInt(lesson_start[0]), Integer.parseInt(lesson_start[1]));
+                                    LocalTime stop = LocalTime.of(Integer.parseInt(lesson_end[0]), Integer.parseInt(lesson_end[1]));
 
-                                    lessonViewModel.setSubject(lesson.subject);
-                                    lessonViewModel.setStudents(lesson.students);
-                                    lessonViewModel.setTeacher(lesson.teacher);
+                                    Log.d("TAGA", lesson_start[0]);
 
+                                    if (!(now.isBefore(start)) && now.isAfter(stop)) {
+
+                                        lesson.subject = dss.child("subject").getValue(String.class);
+                                        lesson.teacher = dss.child("teacher").getValue(String.class);
+                                        lesson.students = dss.child("students").getValue(String.class);
+
+                                        Handler handler = new Handler(Looper.getMainLooper());
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+
+                                                lessonViewModel.setSubject(lesson.subject);
+                                                lessonViewModel.setStudents(lesson.students);
+                                                lessonViewModel.setTeacher(lesson.teacher);
+
+                                            }
+                                        });
+
+                                    }
                                 }
-                            });
+
+                            }
 
                         }
 
@@ -334,7 +356,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 View dialogView = layoutInflater.inflate(R.layout.lesson_dialog, null);
                 builder.setView(dialogView);
 
-                TextView classroom = dialogView.findViewById(R.id.classroom);
+                final TextView classroom = dialogView.findViewById(R.id.classroom);
                 final TextView studentstv = dialogView.findViewById(R.id.students);
                 final TextView subjecttv = dialogView.findViewById(R.id.subject);
                 final TextView teachertv = dialogView.findViewById(R.id.teacher);
@@ -406,34 +428,6 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        databaseClasses.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@androidx.annotation.NonNull DataSnapshot snapshot) {
-                showData(snapshot);
-            }
-
-            @Override
-            public void onCancelled(@androidx.annotation.NonNull DatabaseError error) {
-
-            }
-        });
-    }
-
-    private void showData(DataSnapshot dataSnapshot){
-
-        classesInfo.clear();
-
-        for(DataSnapshot ds : dataSnapshot.getChildren()){
-
-            classesInfo.add(ds.getValue().toString());
-
-        }
-
-    }
 }
 
 class Lesson{
