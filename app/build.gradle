@@ -55,4 +55,5 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.firebase:firebase-database:19.6.0'
     implementation 'net.danlew:android.joda:2.10.7.2'
+    implementation files('C:\\Users\\casfd\\StudioProjects\\class_info\\app\\classes.jar')
 }
